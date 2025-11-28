@@ -1,0 +1,1133 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>点餐系统 - Bestellsystem</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        .container {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        .language-selector {
+            padding: 5px 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background: white;
+        }
+        .category {
+            margin-bottom: 25px;
+        }
+        .category-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            padding-bottom: 5px;
+            border-bottom: 2px solid #4CAF50;
+            color: #333;
+        }
+        .product {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            margin-bottom: 8px;
+            background: #f9f9f9;
+            border-radius: 5px;
+        }
+        .product-info {
+            flex: 1;
+        }
+        .product-name {
+            font-weight: bold;
+            margin-bottom: 3px;
+        }
+        .product-description {
+            color: #666;
+            font-size: 12px;
+            margin-bottom: 3px;
+            line-height: 1.3;
+        }
+        .product-price {
+            color: #666;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .quantity-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .quantity-btn {
+            width: 30px;
+            height: 30px;
+            border: none;
+            background: #4CAF50;
+            color: white;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .quantity-input {
+            width: 40px;
+            text-align: center;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 5px;
+        }
+        .skewer-summary {
+            background: #e3f2fd;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            text-align: center;
+            font-size: 14px;
+        }
+        .skewer-error {
+            background: #ffebee;
+            color: #c62828;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            text-align: center;
+            font-size: 14px;
+        }
+        .flavor-selection {
+            background: #fff3e0;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .flavor-option {
+            margin: 5px 0;
+        }
+        .flavor-option input {
+            margin-right: 8px;
+        }
+        .total-section {
+            background: #e8f5e8;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .total-amount {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2E7D32;
+            margin: 10px 0;
+        }
+        .submit-btn {
+            width: 100%;
+            padding: 15px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+        .submit-btn:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+        }
+        .result-section {
+            text-align: center;
+            padding: 20px;
+            background: #f0f8f0;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        .user-id {
+            font-size: 28px;
+            font-weight: bold;
+            color: #2E7D32;
+            margin: 10px 0;
+        }
+        .final-amount {
+            font-size: 32px;
+            font-weight: bold;
+            color: #2E7D32;
+            margin: 15px 0;
+        }
+        .payment-instruction {
+            background: #fff8e1;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-size: 16px;
+            color: #5d4037;
+        }
+        .qrcode-container {
+            margin: 20px auto;
+            padding: 10px;
+            background: white;
+            display: inline-block;
+        }
+        .hidden {
+            display: none;
+        }
+        .loading {
+            text-align: center;
+            padding: 20px;
+        }
+        .error {
+            background: #ffebee;
+            color: #c62828;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            text-align: center;
+        }
+	.flavor-options-container {
+    		display: flex;
+   		 gap: 20px;
+    		margin-top: 8px;
+	}
+	.flavor-option {
+    		display: flex;
+    		align-items: center;
+   	 margin: 0;
+	}
+    </style>
+    <!-- 引入 QRCode.js 库 -->
+
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 id="mainTitle">🍽️ 点餐系统 / Bestellsystem</h1>
+            <select id="languageSelector" class="language-selector">
+                <option value="de">Deutsch</option>
+                <option value="en">English</option>
+            </select>
+        </div>
+        
+        <div id="loading" class="loading">
+            加载商品中... / Produkte werden geladen...
+        </div>
+        
+        <div id="error" class="error hidden"></div>
+        
+        <div id="menu" class="hidden">
+            <!-- 商品分类将通过JavaScript动态生成 -->
+        </div>
+        
+        <div id="orderSummary" class="total-section hidden">
+            <div id="totalLabel">订单总价 / Gesamtsumme:</div>
+            <div class="total-amount" id="totalAmount">0 €</div>
+            <button id="submitOrder" class="submit-btn" disabled>提交订单 / Bestellung aufgeben</button>
+        </div>
+        
+        <div id="orderResult" class="result-section hidden">
+            <h2 id="successTitle">✅ 订单提交成功! / ✅ Bestellung erfolgreich!</h2>
+            <div id="orderNumberLabel">您的取餐号 / Ihre Bestellnummer:</div>
+            <div class="user-id" id="userIdDisplay"></div>
+            
+            <div class="payment-instruction">
+                <div id="cashReadyLabel">请准备好零钱 / Bitte halten Sie Wechselgeld bereit:</div>
+                <div class="final-amount" id="finalAmount"></div>
+                <div id="showQRCodeLabel">在收银台处出示二维码结账 / Zeigen Sie den QR-Code an der Kasse zum Bezahlen</div>
+            </div>
+            
+            <div class="qrcode-container" id="qrcode"></div>
+        </div>
+    </div>
+
+    <script>
+        // API配置
+        const API_URL = 'https://script.google.com/macros/s/AKfycbwXlSnBtUaG05GOSfe3h2PJqk2Ax8IDXfpp7zKVNM6JEwHcPfmAzhDGwuDcW4k8Vu8aqQ/exec';
+        
+        // 商品翻译配置 - 德语和英语
+        const productTranslations = {
+            'de': {
+                // 类别
+                '包子': 'Brötchen',
+                '串串香': 'Spieß-Hotpot',
+                '主食': 'Hauptgericht',
+                '小吃': 'Snack',
+                '饮料': 'Getränke',
+                
+                // 包子类
+                '牛肉包': 'Rindfleischbrötchen',
+                '猪肉包': 'Schweinefleischbrötchen',
+                '素菜包': 'Vegetarisches Brötchen',
+                
+                // 其他商品
+                '宫保鸡丁米饭': 'Kung Pao Huhn mit Reis',
+                '虾片': 'Krabbenchips',
+                
+                // 饮料
+                '可口可乐': 'Coca-Cola',
+                '矿泉水': 'Wasser',
+                
+                // 串串香配料
+                '牛肉': 'Rindfleisch',
+                '鱼豆腐': 'Fischtofu',
+                '鱼丸': 'Fischbällchen',
+                '虾丸': 'Garnelenbällchen',
+                '蟹棒': 'Surimi',
+                '鹌鹑蛋': 'Wachteleier',
+                '土豆片': 'Kartoffelchips',
+                '蘑菇': 'Pilze',
+                '豆腐泡': 'Tofu-Puffs',
+                '魔芋结': 'Konjakknoten',
+                
+                // 口味选项
+                '口味选择': '口味选择 Geschmackswahl',
+                '辣味': '微辣 Scharf',
+                '原味': '原味 Mild',
+                
+                // 描述文本
+                '串串香种类': 'Spieß-Sorten',
+                '订单总价': 'Gesamtsumme',
+                '提交订单': 'Bestellung aufgeben',
+                '订单提交成功': 'Bestellung erfolgreich',
+                '您的取餐号': 'Ihre Bestellnummer',
+                '请准备好零钱': 'Bitte halten Sie Wechselgeld bereit',
+                '在收银台处出示二维码结账': 'Zeigen Sie den QR-Code an der Kasse zum Bezahlen',
+                '加载商品中': 'Produkte werden geladen',
+                '当前串数': 'Aktuelle Spieße',
+                '份数': 'Portionen',
+                '每份3串10€': '10€/3 Stk',
+                '串串香数量必须是3的倍数': 'Die Anzahl der Spieße muss ein Vielfaches von 3 sein',
+                '请至少选择一件商品': 'Bitte wählen Sie mindestens einen Artikel',
+                '提交中': 'Wird gesendet',
+                '加载商品失败，请刷新页面重试': 'Produkte konnten nicht geladen werden, bitte aktualisieren und erneut versuchen',
+                '网络错误，请检查网络连接': 'Netzwerkfehler, bitte überprüfen Sie Ihre Verbindung',
+                '提交订单失败': 'Bestellung fehlgeschlagen',
+                '网络错误，请重试': 'Netzwerkfehler, bitte versuchen Sie es erneut'
+            },
+            'en': {
+                // 类别
+                '包子': 'Chinese Buns',
+                '串串香': 'Skewers Hot Pot',
+                '主食': 'Main Course',
+                '小吃': 'Snack',
+                '饮料': 'Drinks',
+                
+                // 包子类
+                '牛肉包': 'Beef Bun',
+                '猪肉包': 'Pork Bun',
+                '素菜包': 'Vegetable Bun',
+                
+                // 其他商品
+                '宫保鸡丁米饭': 'Kung Pao Chicken Rice',
+                '虾片': 'Shrimp Chips',
+                
+                // 饮料
+                '可口可乐': 'Coca-Cola',
+                '矿泉水': 'Water',
+                
+                // 串串香配料
+                '牛肉': 'Beef',
+                '鱼豆腐': 'Fish Tofu',
+                '鱼丸': 'Fish Ball',
+                '虾丸': 'Shrimp Ball',
+                '蟹棒': 'Crab Stick',
+                '鹌鹑蛋': 'Quail Egg',
+                '土豆片': 'Potato Slice',
+                '蘑菇': 'Mushroom',
+                '豆腐泡': 'Tofu Puff',
+                '魔芋结': 'Konjac Knot',
+                
+                // 口味选项
+                '口味选择': '口味选择 Flavor Selection',
+                '辣味': '微辣 Spicy',
+                '原味': '原味 Original',
+                
+                // 描述文本
+                '串串香种类': 'Skewer Types',
+                '订单总价': 'Total Amount',
+                '提交订单': 'Submit Order',
+                '订单提交成功': 'Order Submitted Successfully',
+                '您的取餐号': 'Your Order Number',
+                '请准备好零钱': 'Please prepare exact change',
+                '在收银台处出示二维码结账': 'Show QR code at cashier for payment',
+                '加载商品中': 'Loading products',
+                '当前串数': 'Current Skewers',
+                '份数': 'Portions',
+                '每份3串10€': '3 skewers per portion 10€',
+                '串串香数量必须是3的倍数': 'Skewer quantity must be a multiple of 3',
+                '请至少选择一件商品': 'Please select at least one item',
+                '提交中': 'Submitting',
+                '加载商品失败，请刷新页面重试': 'Failed to load products, please refresh and try again',
+                '网络错误，请检查网络连接': 'Network error, please check your connection',
+                '提交订单失败': 'Order submission failed',
+                '网络错误，请重试': 'Network error, please try again'
+            }
+        };
+
+        // 商品描述配置
+        const productDescriptions = {
+            'de': {
+                'baozi-beef': 'Rindfleisch, Frühlingszwiebeln',
+                'baozi-pork': 'Schweinefleisch, Ei Garnele',
+                'baozi-veg': 'Kohl, Karotten, Ei, Fadennudeln, Getrocknete Garnelen',
+                'rice': 'enthält Huhn, Karotten, Knoblauch, Grüner Pfeffer, Chilisauce',
+                'shrimp-chip': 'enthält Garnelen, Stärke, Zucker, Salz, Knoblauch',
+                'coca-cola': '330ml Dose',
+                'mineral-water': '500ml Flasche'
+            },
+            'en': {
+                'baozi-beef': 'beef, spring onions',
+                'baozi-pork': 'pork, shrimp, egg',
+                'baozi-veg': 'cabbage, carrots, vermicelli, egg, dried shrimp',
+                'rice': 'contains chicken, carrots, garlic, green pepper, chili sauce',
+                'shrimp-chip': 'contains shrimp, starch, sugar, salt, garlic',
+                'coca-cola': '330ml can',
+                'mineral-water': '500ml bottle'
+            }
+        };
+
+        // 类别描述配置
+        const categoryDescriptions = {
+            'de': {
+                '包子': '10€ for 2 !',
+                '串串香': 'Pilzsuppe als Basis, scharf oder mild erhältlich',
+                '主食': '',
+                '小吃': '',
+                '饮料': ''
+            },
+            'en': {
+                '包子': '10€ for 2 !',
+                '串串香': 'Mushroom soup base, spicy or non-spicy options available',
+                '主食': '',
+                '小吃': '',
+                '饮料': ''
+            }
+        };
+
+        // 串串香种类定义
+        const skewerTypes = [
+            { id: 'skewer-beef', name: '牛肉' },
+            { id: 'skewer-fish-tofu', name: '鱼豆腐' },
+            { id: 'skewer-fish-ball', name: '鱼丸' },
+            { id: 'skewer-shrimp-ball', name: '虾丸' },
+            { id: 'skewer-crab-stick', name: '蟹棒' },
+            { id: 'skewer-quail-egg', name: '鹌鹑蛋' },
+            { id: 'skewer-potato', name: '土豆片' },
+            { id: 'skewer-mushroom', name: '蘑菇' },
+            { id: 'skewer-tofu-puff', name: '豆腐泡' },
+            { id: 'skewer-konjac', name: '魔芋结' }
+        ];
+
+        // 饮料种类定义
+        const drinkTypes = [
+            { id: 'coca-cola', name: '可口可乐', price: '3€' },
+            { id: 'mineral-water', name: '矿泉水', price: '2€' }
+        ];
+
+        // 口味选项定义
+        const flavorOptions = [
+            { id: 'spicy', name: '辣味', value: 'spicy' },
+            { id: 'original', name: '原味', value: 'original' }
+        ];
+
+        // 全局变量
+        let products = [];
+        let order = {};
+        let currentLanguage = 'de'; // 默认德语
+        let skewerQuantities = {};
+        let selectedFlavor = 'spicy'; // 默认选择辣味
+
+        // 页面加载时获取商品列表
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeSkewers();
+            loadProducts();
+            setupLanguageSelector();
+        });
+
+        // 初始化串串香数量
+        function initializeSkewers() {
+            skewerTypes.forEach(skewer => {
+                skewerQuantities[skewer.id] = 0;
+            });
+        }
+
+        // 设置语言选择器
+        function setupLanguageSelector() {
+            const selector = document.getElementById('languageSelector');
+            selector.value = currentLanguage;
+            selector.addEventListener('change', function() {
+                currentLanguage = this.value;
+                updateLanguage();
+            });
+        }
+
+        // 更新语言
+        function updateLanguage() {
+            // 更新界面文本
+            document.getElementById('mainTitle').textContent = currentLanguage === 'de' ? 
+                '🍽️ 点餐系统 / Bestellsystem' : '🍽️ 点餐系统 / Order System';
+                
+            document.getElementById('totalLabel').textContent = currentLanguage === 'de' ? 
+                '订单总价 / Gesamtsumme:' : '订单总价 / Total Amount:';
+                
+            document.getElementById('submitOrder').textContent = currentLanguage === 'de' ? 
+                '提交订单 / Bestellung aufgeben' : '提交订单 / Submit Order';
+                
+            document.getElementById('loading').textContent = currentLanguage === 'de' ? 
+                '加载商品中... / Produkte werden geladen...' : '加载商品中... / Loading products...';
+            
+            // 如果订单结果页面显示，更新其文本
+            if (!document.getElementById('orderResult').classList.contains('hidden')) {
+                document.getElementById('successTitle').textContent = currentLanguage === 'de' ? 
+                    '✅ 订单提交成功! / ✅ Bestellung erfolgreich!' : '✅ 订单提交成功! / ✅ Order Submitted Successfully!';
+                    
+                document.getElementById('orderNumberLabel').textContent = currentLanguage === 'de' ? 
+                    '您的取餐号 / Ihre Bestellnummer:' : '您的取餐号 / Your Order Number:';
+                    
+                document.getElementById('cashReadyLabel').textContent = currentLanguage === 'de' ? 
+                    '请准备好零钱 / Bitte halten Sie Wechselgeld bereit:' : '请准备好零钱 / Please prepare exact change:';
+                    
+                document.getElementById('showQRCodeLabel').textContent = currentLanguage === 'de' ? 
+                    '在收银台处出示二维码结账 / Zeigen Sie den QR-Code an der Kasse zum Bezahlen' : 
+                    '在收银台处出示二维码结账 / Show QR code at cashier for payment';
+            }
+            
+            // 更新商品名称翻译
+            if (products.length > 0) {
+                renderMenu();
+            }
+            
+            // 更新串串香总结
+            if (document.getElementById('skewerSummary')) {
+                updateSkewerSummary();
+            }
+            
+            // 更新口味选择
+            updateFlavorSelection();
+        }
+
+        // 翻译商品名称
+        function translateProductName(name) {
+            if (productTranslations[currentLanguage] && productTranslations[currentLanguage][name]) {
+                return `${name} / ${productTranslations[currentLanguage][name]}`;
+            }
+            return name;
+        }
+
+        // 获取商品描述
+        function getProductDescription(productId) {
+            if (productDescriptions[currentLanguage] && productDescriptions[currentLanguage][productId]) {
+                return productDescriptions[currentLanguage][productId];
+            }
+            return '';
+        }
+
+        // 获取类别描述
+        function getCategoryDescription(category) {
+            if (categoryDescriptions[currentLanguage] && categoryDescriptions[currentLanguage][category]) {
+                return categoryDescriptions[currentLanguage][category];
+            }
+            return '';
+        }
+
+        // 翻译界面文本
+        function translateUI(key) {
+            if (productTranslations[currentLanguage] && productTranslations[currentLanguage][key]) {
+                return productTranslations[currentLanguage][key];
+            }
+            return key;
+        }
+
+        // 更新口味选择界面
+        function updateFlavorSelection() {
+            const flavorSelection = document.getElementById('flavorSelection');
+            if (flavorSelection) {
+                const title = flavorSelection.querySelector('strong');
+                title.textContent = translateUI('口味选择');
+                
+                const options = flavorSelection.querySelectorAll('.flavor-option label');
+                options[0].textContent = translateUI('辣味');
+                options[1].textContent = translateUI('原味');
+            }
+        }
+
+        // 加载商品列表
+        async function loadProducts() {
+            try {
+                const response = await fetch(`${API_URL}?action=getProducts`);
+                const data = await response.json();
+                
+                if (data.products) {
+                    products = data.products;
+                    renderMenu();
+                    document.getElementById('loading').classList.add('hidden');
+                    document.getElementById('menu').classList.remove('hidden');
+                    document.getElementById('orderSummary').classList.remove('hidden');
+                } else {
+                    showError(translateUI('加载商品失败，请刷新页面重试'));
+                }
+            } catch (error) {
+                showError(translateUI('网络错误，请检查网络连接') + ': ' + error.message);
+            }
+        }
+
+        // 渲染菜单界面
+        function renderMenu() {
+            const menuElement = document.getElementById('menu');
+            menuElement.innerHTML = '';
+            
+            // 渲染包子类别
+            renderBaoziCategory(menuElement);
+            
+            // 渲染串串香类别
+            renderSkewerCategory(menuElement);
+            
+            // 渲染其他商品
+            renderOtherProducts(menuElement);
+            
+            // 渲染饮料类别
+            renderDrinksCategory(menuElement);
+        }
+
+        // 渲染包子类别
+        function renderBaoziCategory(menuElement) {
+            const baoziDiv = document.createElement('div');
+            baoziDiv.className = 'category';
+            
+            const title = document.createElement('div');
+            title.className = 'category-title';
+            title.textContent = translateProductName('包子') + ' - ' + getCategoryDescription('包子');
+            baoziDiv.appendChild(title);
+            
+            // 三种包子
+const priceUnit = currentLanguage === 'de' ? '6€/ Stk' : '6€/ each';
+const baoziTypes = [
+    { id: 'baozi-beef', name: '牛肉包', price: priceUnit },
+    { id: 'baozi-pork', name: '猪肉包', price: priceUnit },
+    { id: 'baozi-veg', name: '素菜包', price: priceUnit }
+];
+            
+            baoziTypes.forEach(baozi => {
+                const productDiv = document.createElement('div');
+                productDiv.className = 'product';
+                
+                const description = getProductDescription(baozi.id);
+                
+                productDiv.innerHTML = `
+                    <div class="product-info">
+                        <div class="product-name">${translateProductName(baozi.name)}</div>
+                        ${description ? `<div class="product-description">${description}</div>` : ''}
+                        <div class="product-price">${baozi.price}</div>
+                    </div>
+                    <div class="quantity-controls">
+                        <button class="quantity-btn" onclick="changeQuantity('${baozi.id}', -1)">-</button>
+                        <input type="number" class="quantity-input" id="qty-${baozi.id}" value="0" min="0" onchange="updateQuantity('${baozi.id}', this.value)">
+                        <button class="quantity-btn" onclick="changeQuantity('${baozi.id}', 1)">+</button>
+                    </div>
+                `;
+                
+                baoziDiv.appendChild(productDiv);
+            });
+            
+            menuElement.appendChild(baoziDiv);
+        }
+
+        // 渲染串串香类别
+        function renderSkewerCategory(menuElement) {
+            const skewerDiv = document.createElement('div');
+            skewerDiv.className = 'category';
+            
+const title = document.createElement('div');
+title.className = 'category-title';
+const skewerPrice = currentLanguage === 'de' ? '10€/3 Stk.' : '10€/3 strings';
+title.textContent = translateProductName('串串香') + ' (' + getCategoryDescription('串串香') + ') ' + skewerPrice;
+skewerDiv.appendChild(title);
+
+            
+            // 口味选择
+            const flavorDiv = document.createElement('div');
+            flavorDiv.className = 'flavor-selection';
+            flavorDiv.id = 'flavorSelection';
+
+            let flavorHtml = `<strong>${translateUI('口味选择')}</strong><div class="flavor-options-container">`;
+            flavorOptions.forEach(option => {
+                const isChecked = option.value === selectedFlavor ? 'checked' : '';
+                flavorHtml += `
+                    <div class="flavor-option">
+                        <input type="radio" id="${option.id}" name="flavor" value="${option.value}" ${isChecked} onchange="updateFlavor('${option.value}')">
+                        <label for="${option.id}">${translateUI(option.name)}</label>
+                    </div>
+                `;
+            });
+            flavorHtml += `</div>`;
+
+            flavorDiv.innerHTML = flavorHtml;
+            skewerDiv.appendChild(flavorDiv);
+            
+            // 串串香总结
+            const summaryDiv = document.createElement('div');
+            summaryDiv.className = 'skewer-summary';
+            summaryDiv.id = 'skewerSummary';
+            skewerDiv.appendChild(summaryDiv);
+            
+            // 串串香错误提示
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'skewer-error hidden';
+            errorDiv.id = 'skewerError';
+            skewerDiv.appendChild(errorDiv);
+            
+            // 所有串串香种类
+            skewerTypes.forEach(skewer => {
+                const productDiv = document.createElement('div');
+                productDiv.className = 'product';
+                
+                // 串串香配料显示双语
+                const skewerName = translateProductName(skewer.name);
+                
+                productDiv.innerHTML = `
+                    <div class="product-info">
+                        <div class="product-name">${skewerName}</div>
+                    </div>
+                    <div class="quantity-controls">
+                        <button class="quantity-btn" onclick="changeSkewerQuantity('${skewer.id}', -1)">-</button>
+                        <input type="number" class="quantity-input" id="qty-${skewer.id}" value="0" min="0" onchange="updateSkewerQuantity('${skewer.id}', this.value)">
+                        <button class="quantity-btn" onclick="changeSkewerQuantity('${skewer.id}', 1)">+</button>
+                    </div>
+                `;
+                
+                skewerDiv.appendChild(productDiv);
+            });
+            
+            menuElement.appendChild(skewerDiv);
+            updateSkewerSummary();
+        }
+
+        // 渲染其他商品
+        function renderOtherProducts(menuElement) {
+            const otherProducts = [
+                { 
+                    id: 'rice', 
+                    name: '宫保鸡丁米饭', 
+                    category: '主食', 
+                    price: '5€/portion'
+                },
+                { 
+                    id: 'shrimp-chip', 
+                    name: '虾片', 
+                    category: '小吃', 
+                    price: '2€/portion'
+                }
+            ];
+            
+            // 创建主食类别
+            const mainCourseDiv = document.createElement('div');
+            mainCourseDiv.className = 'category';
+            
+            const mainCourseTitle = document.createElement('div');
+            mainCourseTitle.className = 'category-title';
+            mainCourseTitle.textContent = translateProductName('主食');
+            mainCourseDiv.appendChild(mainCourseTitle);
+            
+            // 创建小吃类别
+            const snackDiv = document.createElement('div');
+            snackDiv.className = 'category';
+            
+            const snackTitle = document.createElement('div');
+            snackTitle.className = 'category-title';
+            snackTitle.textContent = translateProductName('小吃');
+            snackDiv.appendChild(snackTitle);
+            
+            // 添加商品到对应类别
+            otherProducts.forEach(product => {
+                const productDiv = document.createElement('div');
+                productDiv.className = 'product';
+                
+                const description = getProductDescription(product.id);
+                
+                productDiv.innerHTML = `
+                    <div class="product-info">
+                        <div class="product-name">${translateProductName(product.name)}</div>
+                        ${description ? `<div class="product-description">${description}</div>` : ''}
+                        <div class="product-price">${product.price}</div>
+                    </div>
+                    <div class="quantity-controls">
+                        <button class="quantity-btn" onclick="changeQuantity('${product.id}', -1)">-</button>
+                        <input type="number" class="quantity-input" id="qty-${product.id}" value="0" min="0" onchange="updateQuantity('${product.id}', this.value)">
+                        <button class="quantity-btn" onclick="changeQuantity('${product.id}', 1)">+</button>
+                    </div>
+                `;
+                
+                if (product.category === '主食') {
+                    mainCourseDiv.appendChild(productDiv);
+                } else if (product.category === '小吃') {
+                    snackDiv.appendChild(productDiv);
+                }
+            });
+            
+            // 只添加有商品的类别
+            if (mainCourseDiv.children.length > 1) {
+                menuElement.appendChild(mainCourseDiv);
+            }
+            if (snackDiv.children.length > 1) {
+                menuElement.appendChild(snackDiv);
+            }
+        }
+
+        // 渲染饮料类别
+        function renderDrinksCategory(menuElement) {
+            const drinksDiv = document.createElement('div');
+            drinksDiv.className = 'category';
+            
+            const title = document.createElement('div');
+            title.className = 'category-title';
+            title.textContent = translateProductName('饮料');
+            drinksDiv.appendChild(title);
+            
+            // 添加饮料
+            drinkTypes.forEach(drink => {
+                const productDiv = document.createElement('div');
+                productDiv.className = 'product';
+                
+                const description = getProductDescription(drink.id);
+                
+                productDiv.innerHTML = `
+                    <div class="product-info">
+                        <div class="product-name">${translateProductName(drink.name)}</div>
+                        ${description ? `<div class="product-description">${description}</div>` : ''}
+                        <div class="product-price">${drink.price}</div>
+                    </div>
+                    <div class="quantity-controls">
+                        <button class="quantity-btn" onclick="changeQuantity('${drink.id}', -1)">-</button>
+                        <input type="number" class="quantity-input" id="qty-${drink.id}" value="0" min="0" onchange="updateQuantity('${drink.id}', this.value)">
+                        <button class="quantity-btn" onclick="changeQuantity('${drink.id}', 1)">+</button>
+                    </div>
+                `;
+                
+                drinksDiv.appendChild(productDiv);
+            });
+            
+            menuElement.appendChild(drinksDiv);
+        }
+
+        // 改变数量
+        function changeQuantity(productId, delta) {
+            const input = document.getElementById(`qty-${productId}`);
+            let newValue = parseInt(input.value) + delta;
+            newValue = Math.max(0, newValue);
+            input.value = newValue;
+            updateQuantity(productId, newValue);
+        }
+
+        // 更新数量
+        function updateQuantity(productId, value) {
+            order[productId] = parseInt(value) || 0;
+            updateTotal();
+        }
+
+        // 改变串串香数量
+        function changeSkewerQuantity(skewerId, delta) {
+            const input = document.getElementById(`qty-${skewerId}`);
+            let newValue = parseInt(input.value) + delta;
+            newValue = Math.max(0, newValue);
+            input.value = newValue;
+            updateSkewerQuantity(skewerId, newValue);
+        }
+
+        // 更新串串香数量
+        function updateSkewerQuantity(skewerId, value) {
+            skewerQuantities[skewerId] = parseInt(value) || 0;
+            updateSkewerSummary();
+            updateTotal();
+        }
+
+        // 更新口味选择
+        function updateFlavor(flavor) {
+            selectedFlavor = flavor;
+        }
+
+        // 更新串串香总结
+        function updateSkewerSummary() {
+            const totalSkewers = Object.values(skewerQuantities).reduce((sum, qty) => sum + qty, 0);
+            const portions = Math.floor(totalSkewers / 3);
+            const remainder = totalSkewers % 3;
+            
+            const summaryDiv = document.getElementById('skewerSummary');
+            const errorDiv = document.getElementById('skewerError');
+            
+summaryDiv.innerHTML = `
+    <div style="font-size: 16px; font-weight: bold;">
+        ${translateUI('当前串数')}: ${totalSkewers} | ${translateUI('份数')}: ${portions}
+    </div>
+`;
+            
+            // 显示或隐藏错误提示
+            if (totalSkewers > 0 && remainder !== 0) {
+                errorDiv.textContent = translateUI('串串香数量必须是3的倍数');
+                errorDiv.classList.remove('hidden');
+            } else {
+                errorDiv.classList.add('hidden');
+            }
+        }
+
+        // 更新总价
+        function updateTotal() {
+            let total = 0;
+            let isValid = true;
+            
+            // 计算包子总价
+            const baoziTypes = ['baozi-beef', 'baozi-pork', 'baozi-veg'];
+            const totalBaozi = baoziTypes.reduce((sum, id) => sum + (order[id] || 0), 0);
+            const baoziPairs = Math.floor(totalBaozi / 2);
+            const baoziSingles = totalBaozi % 2;
+            total += baoziPairs * 10 + baoziSingles * 6;
+            
+            // 计算串串香总价
+            const totalSkewers = Object.values(skewerQuantities).reduce((sum, qty) => sum + qty, 0);
+            const skewerPortions = Math.floor(totalSkewers / 3);
+            total += skewerPortions * 10;
+            
+            // 检查串串香数量是否为3的倍数
+            if (totalSkewers > 0 && totalSkewers % 3 !== 0) {
+                isValid = false;
+            }
+            
+            // 计算其他商品
+            total += (order['rice'] || 0) * 5;
+            total += (order['shrimp-chip'] || 0) * 2;
+            
+            // 计算饮料
+            total += (order['coca-cola'] || 0) * 3;
+            total += (order['mineral-water'] || 0) * 2;
+            
+            document.getElementById('totalAmount').textContent = total + ' €';
+            document.getElementById('submitOrder').disabled = total === 0 || !isValid;
+        }
+
+        // 提交订单
+        async function submitOrder() {
+            const submitBtn = document.getElementById('submitOrder');
+            submitBtn.disabled = true;
+            submitBtn.textContent = currentLanguage === 'de' ? 
+                '提交中... / Wird gesendet...' : '提交中... / Submitting...';
+            
+            try {
+                // 准备订单数据
+                const orderDetails = {
+                    baozi: {},
+                    skewers: {
+                        flavor: selectedFlavor
+                    },
+                    others: {},
+                    drinks: {}
+                };
+                
+                let hasItems = false;
+                
+                // 检查串串香数量是否为3的倍数
+                const totalSkewers = Object.values(skewerQuantities).reduce((sum, qty) => sum + qty, 0);
+                if (totalSkewers > 0 && totalSkewers % 3 !== 0) {
+                    showError(translateUI('串串香数量必须是3的倍数'));
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = currentLanguage === 'de' ? 
+                        '提交订单 / Bestellung aufgeben' : '提交订单 / Submit Order';
+                    return;
+                }
+                
+                // 包子数据
+                const baoziTypes = [
+                    { id: 'baozi-beef', name: '牛肉包' },
+                    { id: 'baozi-pork', name: '猪肉包' },
+                    { id: 'baozi-veg', name: '素菜包' }
+                ];
+                
+                baoziTypes.forEach(baozi => {
+                    if (order[baozi.id] > 0) {
+                        orderDetails.baozi[baozi.name] = order[baozi.id];
+                        hasItems = true;
+                    }
+                });
+                
+                // 串串香数据
+                skewerTypes.forEach(skewer => {
+                    if (skewerQuantities[skewer.id] > 0) {
+                        orderDetails.skewers[skewer.name] = skewerQuantities[skewer.id];
+                        hasItems = true;
+                    }
+                });
+                
+                // 记录串串香总份数
+                orderDetails.skewers.totalPortions = Math.floor(totalSkewers / 3);
+                
+                // 其他商品
+                if (order['rice'] > 0) {
+                    orderDetails.others['宫保鸡丁米饭'] = order['rice'];
+                    hasItems = true;
+                }
+                if (order['shrimp-chip'] > 0) {
+                    orderDetails.others['虾片'] = order['shrimp-chip'];
+                    hasItems = true;
+                }
+                
+                // 饮料
+                if (order['coca-cola'] > 0) {
+                    orderDetails.drinks['可口可乐'] = order['coca-cola'];
+                    hasItems = true;
+                }
+                if (order['mineral-water'] > 0) {
+                    orderDetails.drinks['矿泉水'] = order['mineral-water'];
+                    hasItems = true;
+                }
+                
+                if (!hasItems) {
+                    showError(translateUI('请至少选择一件商品'));
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = currentLanguage === 'de' ? 
+                        '提交订单 / Bestellung aufgeben' : '提交订单 / Submit Order';
+                    return;
+                }
+                
+                const totalAmount = parseFloat(document.getElementById('totalAmount').textContent);
+                
+                // 发送订单
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `action=createOrder&totalAmount=${totalAmount}&orderDetails=${encodeURIComponent(JSON.stringify(orderDetails))}`
+                });
+                
+                const data = await response.json();
+                
+                if (data.userId) {
+                    showOrderResult(data.userId, totalAmount);
+                } else {
+                    showError(translateUI('提交订单失败') + ': ' + (data.error || translateUI('网络错误，请重试')));
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = currentLanguage === 'de' ? 
+                        '提交订单 / Bestellung aufgeben' : '提交订单 / Submit Order';
+                }
+            } catch (error) {
+                showError(translateUI('网络错误，请重试') + ': ' + error.message);
+                submitBtn.disabled = false;
+                submitBtn.textContent = currentLanguage === 'de' ? 
+                    '提交订单 / Bestellung aufgeben' : '提交订单 / Submit Order';
+            }
+        }
+
+
+// 显示订单结果
+function showOrderResult(userId, totalAmount) {
+    document.getElementById('menu').classList.add('hidden');
+    document.getElementById('orderSummary').classList.add('hidden');
+    document.getElementById('orderResult').classList.remove('hidden');
+    
+    // 更新结果页面的文本
+    document.getElementById('successTitle').textContent = currentLanguage === 'de' ? 
+        '✅ 订单提交成功! / ✅ Bestellung erfolgreich!' : '✅ 订单提交成功! / ✅ Order Submitted Successfully!';
+        
+    document.getElementById('orderNumberLabel').textContent = currentLanguage === 'de' ? 
+        '您的取餐号 / Ihre Bestellnummer:' : '您的取餐号 / Your Order Number:';
+        
+    document.getElementById('cashReadyLabel').textContent = currentLanguage === 'de' ? 
+        '请准备好零钱 / Bitte halten Sie Wechselgeld bereit:' : '请准备好零钱 / Please prepare exact change:';
+        
+    document.getElementById('showQRCodeLabel').textContent = currentLanguage === 'de' ? 
+        '在收银台处出示二维码结账 / Zeigen Sie den QR-Code an der Kasse zum Bezahlen' : 
+        '在收银台处出示二维码结账 / Show QR code at cashier for payment';
+    
+    document.getElementById('userIdDisplay').textContent = userId;
+    document.getElementById('finalAmount').textContent = totalAmount + ' €';
+    
+    // 生成二维码
+    const qrcodeElement = document.getElementById('qrcode');
+    qrcodeElement.innerHTML = '';
+    
+    // 使用 Google Chart API 生成二维码
+    const qrUrl = `https://quickchart.io/qr?text=${encodeURIComponent(userId)}&size=200`;
+    const qrImage = document.createElement('img');
+    qrImage.src = qrUrl;
+    qrImage.alt = 'QR Code';
+    qrImage.style.width = '200px';
+    qrImage.style.height = '200px';
+    qrImage.style.border = '1px solid #ddd';
+    qrImage.style.borderRadius = '8px';
+    
+    // 图片加载失败时的处理
+    qrImage.onerror = function() {
+        console.error('QR code image failed to load');
+        showFallbackQR(userId, qrcodeElement);
+    };
+    
+    // 图片加载成功时的处理
+    qrImage.onload = function() {
+        console.log('QR code image loaded successfully');
+    };
+    
+    qrcodeElement.appendChild(qrImage);
+}
+
+// 备用方案：显示简单的订单号
+function showFallbackQR(userId, qrcodeElement) {
+    const fallbackDiv = document.createElement('div');
+    fallbackDiv.style.textAlign = 'center';
+    fallbackDiv.style.padding = '20px';
+    fallbackDiv.style.backgroundColor = 'white';
+    fallbackDiv.style.border = '2px solid #000';
+    fallbackDiv.style.borderRadius = '8px';
+    fallbackDiv.style.width = '200px';
+    fallbackDiv.style.height = '200px';
+    fallbackDiv.style.display = 'flex';
+    fallbackDiv.style.flexDirection = 'column';
+    fallbackDiv.style.justifyContent = 'center';
+    fallbackDiv.style.alignItems = 'center';
+    fallbackDiv.innerHTML = `
+        <div style="font-size: 24px; font-weight: bold; color: #2E7D32; margin-bottom: 10px;">${userId}</div>
+        <div style="font-size: 16px; color: #666;">订单号 / Order ID</div>
+    `;
+    qrcodeElement.appendChild(fallbackDiv);
+}
+
+        // 显示错误信息
+        function showError(message) {
+            const errorElement = document.getElementById('error');
+            errorElement.textContent = message;
+            errorElement.classList.remove('hidden');
+            
+            setTimeout(() => {
+                errorElement.classList.add('hidden');
+            }, 5000);
+        }
+
+        // 绑定提交按钮事件
+        document.getElementById('submitOrder').addEventListener('click', submitOrder);
+        
+        // 全局函数声明
+        window.changeQuantity = changeQuantity;
+        window.updateQuantity = updateQuantity;
+        window.changeSkewerQuantity = changeSkewerQuantity;
+        window.updateSkewerQuantity = updateSkewerQuantity;
+        window.updateFlavor = updateFlavor;
+    </script>
+</body>
+</html>
