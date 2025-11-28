@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>后厨备餐系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .container {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #4CAF50;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #ddd;
+        }
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            background: #f1f1f1;
+            border: 1px solid #ddd;
+            border-bottom: none;
+            border-radius: 5px 5px 0 0;
+            margin-right: 5px;
+        }
+        .tab.active {
+            background: white;
+            border-bottom: 1px solid white;
+            margin-bottom: -1px;
+            font-weight: bold;
+            color: #4CAF50;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .section {
+            margin-bottom: 25px;
+        }
+        .section-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            padding-bottom: 5px;
+            border-bottom: 2px solid #4CAF50;
+            color: #333;
+        }
+        .order-card {
+            background: #f9f9f9;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            border-left: 4px solid #4CAF50;
+        }
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #eee;
+        }
+        .order-id {
+            font-weight: bold;
+            font-size: 24px; /* 增大订单号字体 */
+            color: #1565C0; /* 使用醒目的深蓝色 */
+        }
+        .order-status {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .status-paid {
+            background: #e8f5e8;
+            color: #2E7D32;
+        }
+        .status-completed {
+            background: #e3f2fd;
+            color: #1565C0;
+        }
+        .order-items {
+            margin-bottom: 15px;
+        }
+        .order-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 3px 0; /* 减少内边距，使间距更小 */
+            border-bottom: 1px dashed #eee;
+        }
+        .item-name {
+            flex: 1;
+        }
+        .item-quantity {
+            color: #666;
+            margin-right: 5px; /* 减少右边距 */
+        }
+        .order-footer {
+            display: flex;
+            justify-content: flex-end; /* 金额已移除，按钮靠右对齐 */
+            align-items: center;
+            margin-top: 10px;
+        }
+        .action-btn {
+            padding: 12px 20px; /* 增大按钮尺寸 */
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 16px; /* 增大按钮字体 */
+        }
+        .action-btn.completed {
+            background: #2196F3;
+        }
+        .search-section {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .search-input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+        .search-btn {
+            width: 100%;
+            padding: 12px;
+            background: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+        .date-inputs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .date-input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+        }
+        .hidden {
+            display: none;
+        }
+        .loading {
+            text-align: center;
+            padding: 20px;
+        }
+        .error {
+            background: #ffebee;
+            color: #c62828;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            text-align: center;
+        }
+        .success {
+            background: #e8f5e8;
+            color: #2E7D32;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            text-align: center;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 30px;
+            color: #666;
+        }
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+            color: #ddd;
+        }
+        
+        /* 串串香详细信息样式 */
+        .skewer-details {
+            background: #fff3e0;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .skewer-detail-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 3px 0; /* 减少内边距，使间距更小 */
+            border-bottom: 1px dashed #ffcc80;
+        }
+        .skewer-detail-item:last-child {
+            border-bottom: none;
+        }
+        .skewer-flavor {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #E65100;
+        }
+        
+        /* 移除模态框相关样式 */
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>👨‍🍳 后厨备餐系统</h1>
+        </div>
+        
+        <div class="tabs">
+            <div class="tab active" data-tab="pending">待处理订单</div>
+            <div class="tab" data-tab="history">历史订单</div>
+        </div>
+        
+        <!-- 待处理订单 -->
+        <div id="pendingTab" class="tab-content active">
+            <div class="section">
+                <div class="section-title">待处理订单</div>
+                <div id="pendingOrders">
+                    <!-- 待处理订单将通过JavaScript动态生成 -->
+                </div>
+                <div id="noPendingOrders" class="empty-state hidden">
+                    <div class="empty-state-icon">📭</div>
+                    <div>暂无待处理订单</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 历史订单 -->
+        <div id="historyTab" class="tab-content">
+            <div class="search-section">
+                <h2>查询历史订单</h2>
+                <input type="text" id="orderSearch" class="search-input" placeholder="输入订单号 (如: 4)">
+                <div class="date-inputs">
+                    <input type="date" id="startDate" class="date-input">
+                    <input type="date" id="endDate" class="date-input">
+                </div>
+                <button id="searchHistory" class="search-btn">查询订单</button>
+            </div>
+            
+            <div class="section">
+                <div class="section-title">查询结果</div>
+                <div id="historyOrders">
+                    <!-- 历史订单将通过JavaScript动态生成 -->
+                </div>
+                <div id="noHistoryOrders" class="empty-state hidden">
+                    <div class="empty-state-icon">📄</div>
+                    <div>暂无历史订单记录</div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="loading" class="loading hidden">
+            正在加载订单信息...
+        </div>
+        
+        <div id="error" class="error hidden"></div>
+        <div id="success" class="success hidden"></div>
+    </div>
+
+    <script>
+        // API配置 - 与收银系统相同的后端
+        const API_URL = 'https://script.google.com/macros/s/AKfycbwXlSnBtUaG05GOSfe3h2PJqk2Ax8IDXfpp7zKVNM6JEwHcPfmAzhDGwuDcW4k8Vu8aqQ/exec';
+        
+        // 全局变量
+        let allOrders = [];
+        
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            setupEventListeners();
+            loadPendingOrders();
+        });
+        
+        // 设置事件监听器
+        function setupEventListeners() {
+            // 选项卡切换
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    // 移除所有活动状态
+                    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                    
+                    // 添加当前活动状态
+                    this.classList.add('active');
+                    document.getElementById(this.getAttribute('data-tab') + 'Tab').classList.add('active');
+                    
+                    // 如果是历史订单选项卡，加载历史订单
+                    if (this.getAttribute('data-tab') === 'history') {
+                        loadHistoryOrders();
+                    }
+                });
+            });
+            
+            // 查询历史订单
+            document.getElementById('searchHistory').addEventListener('click', searchHistoryOrders);
+            
+            // 允许按Enter键查询历史订单
+            document.getElementById('orderSearch').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    searchHistoryOrders();
+                }
+            });
+        }
+        
+        // 加载待处理订单
+        async function loadPendingOrders() {
+            showLoading();
+            hideError();
+            
+            try {
+                const response = await fetch(`${API_URL}?action=getOrders`);
+                const data = await response.json();
+                
+                if (data.orders && Array.isArray(data.orders)) {
+                    allOrders = data.orders;
+                    displayPendingOrders();
+                } else {
+                    showError('获取订单数据失败: ' + (data.error || '未知错误'));
+                }
+            } catch (error) {
+                console.error('API错误:', error);
+                showError('网络错误: ' + error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+        
+        // 显示待处理订单
+        function displayPendingOrders() {
+            const pendingOrdersContainer = document.getElementById('pendingOrders');
+            const noPendingOrdersElement = document.getElementById('noPendingOrders');
+            
+            // 筛选已付款但未完成的订单
+            const pendingOrders = allOrders.filter(order => 
+                order.status === 'paid' || order.status === 'Paid'
+            );
+            
+            // 清空容器
+            pendingOrdersContainer.innerHTML = '';
+            
+            if (pendingOrders.length === 0) {
+                noPendingOrdersElement.classList.remove('hidden');
+                return;
+            }
+            
+            noPendingOrdersElement.classList.add('hidden');
+            
+            // 按时间排序，最新的在前
+            pendingOrders.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            
+            // 生成订单卡片
+            pendingOrders.forEach(order => {
+                const orderCard = createOrderCard(order, 'pending');
+                pendingOrdersContainer.appendChild(orderCard);
+            });
+        }
+        
+        // 加载历史订单
+        async function loadHistoryOrders() {
+            showLoading();
+            hideError();
+            
+            try {
+                const response = await fetch(`${API_URL}?action=getOrders`);
+                const data = await response.json();
+                
+                if (data.orders && Array.isArray(data.orders)) {
+                    allOrders = data.orders;
+                    displayHistoryOrders();
+                } else {
+                    showError('获取订单数据失败: ' + (data.error || '未知错误'));
+                }
+            } catch (error) {
+                console.error('API错误:', error);
+                showError('网络错误: ' + error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+        
+        // 显示历史订单
+        function displayHistoryOrders(filteredOrders = null) {
+            const historyOrdersContainer = document.getElementById('historyOrders');
+            const noHistoryOrdersElement = document.getElementById('noHistoryOrders');
+            
+            // 筛选已完成的订单
+            let historyOrders = allOrders.filter(order => 
+                order.status === 'completed' || order.status === 'Completed'
+            );
+            
+            // 如果提供了过滤结果，使用过滤结果
+            if (filteredOrders) {
+                historyOrders = filteredOrders;
+            }
+            
+            // 清空容器
+            historyOrdersContainer.innerHTML = '';
+            
+            if (historyOrders.length === 0) {
+                noHistoryOrdersElement.classList.remove('hidden');
+                return;
+            }
+            
+            noHistoryOrdersElement.classList.add('hidden');
+            
+            // 按时间排序，最新的在前
+            historyOrders.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            
+            // 生成订单卡片
+            historyOrders.forEach(order => {
+                const orderCard = createOrderCard(order, 'history');
+                historyOrdersContainer.appendChild(orderCard);
+            });
+        }
+        
+        // 查询历史订单
+        function searchHistoryOrders() {
+            const orderIdInput = document.getElementById('orderSearch').value.trim();
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            
+            // 筛选已完成的订单
+            let filteredOrders = allOrders.filter(order => 
+                order.status === 'completed' || order.status === 'Completed'
+            );
+            
+            // 按订单号筛选
+            if (orderIdInput) {
+                const orderIdNum = parseInt(orderIdInput);
+                if (!isNaN(orderIdNum)) {
+                    const formattedOrderId = formatUserId(orderIdNum);
+                    filteredOrders = filteredOrders.filter(order => order.userId === formattedOrderId);
+                }
+            }
+            
+            // 按日期范围筛选
+            if (startDate) {
+                filteredOrders = filteredOrders.filter(order => {
+                    const orderDate = new Date(order.timestamp).toISOString().split('T')[0];
+                    return orderDate >= startDate;
+                });
+            }
+            
+            if (endDate) {
+                filteredOrders = filteredOrders.filter(order => {
+                    const orderDate = new Date(order.timestamp).toISOString().split('T')[0];
+                    return orderDate <= endDate;
+                });
+            }
+            
+            displayHistoryOrders(filteredOrders);
+        }
+        
+        // 创建订单卡片
+        function createOrderCard(order, type) {
+            const orderCard = document.createElement('div');
+            orderCard.className = 'order-card';
+            
+            // 解析订单详情
+            let orderDetails;
+            try {
+                orderDetails = JSON.parse(order.orderDetails);
+            } catch (e) {
+                console.error('解析订单详情错误:', e);
+                orderDetails = {};
+            }
+            
+            // 生成订单内容HTML
+            let itemsHtml = '';
+            
+            // 包子
+            if (orderDetails.baozi) {
+                for (const [name, quantity] of Object.entries(orderDetails.baozi)) {
+                    if (quantity > 0) {
+                        itemsHtml += `
+                            <div class="order-item">
+                                <div class="item-name">${name}</div>
+                                <div class="item-quantity">x${quantity}</div>
+                            </div>
+                        `;
+                    }
+                }
+            }
+            
+            // 串串香 - 直接显示具体种类和口味
+            if (orderDetails.skewers) {
+                const flavor = orderDetails.skewers.flavor === 'spicy' ? '辣' : '原';
+                
+                // 添加串串香详细信息
+                itemsHtml += `<div class="skewer-details">`;
+                
+                // 显示每种串串的具体数量和口味
+                let hasSkewerItems = false;
+                for (const [name, quantity] of Object.entries(orderDetails.skewers)) {
+                    if (name !== 'flavor' && name !== 'totalPortions' && quantity > 0) {
+                        hasSkewerItems = true;
+                        itemsHtml += `
+                            <div class="skewer-detail-item">
+                                <div class="item-name">${name}（${flavor}）</div>
+                                <div class="item-quantity">x${quantity}</div>
+                            </div>
+                        `;
+                    }
+                }
+                
+                // 如果没有具体种类数据，显示提示
+                if (!hasSkewerItems && orderDetails.skewers.totalPortions > 0) {
+                    itemsHtml += `<div style="color: #666; font-style: italic;">无具体种类信息</div>`;
+                }
+                
+                itemsHtml += `</div>`;
+            }
+            
+            // 其他商品
+            if (orderDetails.others) {
+                for (const [name, quantity] of Object.entries(orderDetails.others)) {
+                    if (quantity > 0) {
+                        itemsHtml += `
+                            <div class="order-item">
+                                <div class="item-name">${name}</div>
+                                <div class="item-quantity">x${quantity}</div>
+                            </div>
+                        `;
+                    }
+                }
+            }
+            
+            // 饮料
+            if (orderDetails.drinks) {
+                for (const [name, quantity] of Object.entries(orderDetails.drinks)) {
+                    if (quantity > 0) {
+                        itemsHtml += `
+                            <div class="order-item">
+                                <div class="item-name">${name}</div>
+                                <div class="item-quantity">x${quantity}</div>
+                            </div>
+                        `;
+                    }
+                }
+            }
+            
+            // 状态标签和按钮
+            let statusHtml = '';
+            let actionHtml = '';
+            
+            if (type === 'pending') {
+                statusHtml = `<span class="order-status status-paid">待处理</span>`;
+                actionHtml = `<button class="action-btn" onclick="completeOrder('${order.userId}')">完成备餐</button>`;
+            } else {
+                statusHtml = `<span class="order-status status-completed">已完成</span>`;
+                // 历史订单不再显示查看详情按钮
+            }
+            
+            orderCard.innerHTML = `
+                <div class="order-header">
+                    <div class="order-id">订单 #${parseInt(order.userId)}</div>
+                    ${statusHtml}
+                </div>
+                <div class="order-items">
+                    ${itemsHtml}
+                </div>
+                <div class="order-footer">
+                    ${actionHtml}
+                </div>
+            `;
+            
+            return orderCard;
+        }
+        
+        // 完成订单
+        async function completeOrder(userId) {
+            if (!confirm('确认此订单已完成备餐？')) {
+                return;
+            }
+            
+            showLoading();
+            
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `action=updateOrderStatus&userId=${userId}&status=completed`
+                });
+                
+                const data = await response.json();
+                
+                if (data.success || data.message) {
+                    showSuccess('订单状态已更新为已完成！');
+                    loadPendingOrders();
+                } else {
+                    showError('更新订单状态失败: ' + (data.error || '未知错误'));
+                }
+            } catch (error) {
+                console.error('更新订单状态错误:', error);
+                showError('网络错误: ' + error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+        
+        // 格式化用户ID为4位数字
+        function formatUserId(userId) {
+            return userId.toString().padStart(4, '0');
+        }
+        
+        // 显示加载状态
+        function showLoading() {
+            document.getElementById('loading').classList.remove('hidden');
+        }
+        
+        // 隐藏加载状态
+        function hideLoading() {
+            document.getElementById('loading').classList.add('hidden');
+        }
+        
+        // 显示错误信息
+        function showError(message) {
+            const errorElement = document.getElementById('error');
+            errorElement.textContent = message;
+            errorElement.classList.remove('hidden');
+        }
+        
+        // 隐藏错误信息
+        function hideError() {
+            document.getElementById('error').classList.add('hidden');
+        }
+        
+        // 显示成功信息
+        function showSuccess(message) {
+            const successElement = document.getElementById('success');
+            successElement.textContent = message;
+            successElement.classList.remove('hidden');
+            
+            // 3秒后自动隐藏
+            setTimeout(() => {
+                hideSuccess();
+            }, 3000);
+        }
+        
+        // 隐藏成功信息
+        function hideSuccess() {
+            document.getElementById('success').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
