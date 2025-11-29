@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>后厨备餐系统</title>
+    <title>维团备餐系统 - 终端1</title>
     <style>
         * {
             margin: 0;
@@ -28,11 +28,21 @@
             margin-bottom: 20px;
             padding-bottom: 10px;
             border-bottom: 2px solid #4CAF50;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
         h1 {
-            text-align: center;
-            margin-bottom: 20px;
             color: #333;
+            flex: 1;
+            text-align: center;
+        }
+        .terminal-info {
+            background: #e3f2fd;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            color: #1565C0;
         }
         .tabs {
             display: flex;
@@ -79,6 +89,15 @@
             margin-bottom: 15px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
             border-left: 4px solid #4CAF50;
+            transition: all 0.3s ease;
+        }
+        .order-card.processing {
+            border-left-color: #FF9800;
+            background: #fff3e0;
+        }
+        .order-card.completed {
+            border-left-color: #4CAF50;
+            opacity: 0.8;
         }
         .order-header {
             display: flex;
@@ -90,8 +109,8 @@
         }
         .order-id {
             font-weight: bold;
-            font-size: 24px; /* 增大订单号字体 */
-            color: #1565C0; /* 使用醒目的深蓝色 */
+            font-size: 24px;
+            color: #1565C0;
         }
         .order-status {
             padding: 4px 8px;
@@ -103,6 +122,10 @@
             background: #e8f5e8;
             color: #2E7D32;
         }
+        .status-processing {
+            background: #fff3e0;
+            color: #E65100;
+        }
         .status-completed {
             background: #e3f2fd;
             color: #1565C0;
@@ -113,7 +136,7 @@
         .order-item {
             display: flex;
             justify-content: space-between;
-            padding: 3px 0; /* 减少内边距，使间距更小 */
+            padding: 3px 0;
             border-bottom: 1px dashed #eee;
         }
         .item-name {
@@ -121,26 +144,35 @@
         }
         .item-quantity {
             color: #666;
-            margin-right: 5px; /* 减少右边距 */
+            margin-right: 5px;
         }
         .order-footer {
             display: flex;
-            justify-content: flex-end; /* 金额已移除，按钮靠右对齐 */
+            justify-content: space-between;
             align-items: center;
             margin-top: 10px;
         }
+        .processing-info {
+            font-size: 14px;
+            color: #E65100;
+            font-weight: bold;
+        }
         .action-btn {
-            padding: 12px 20px; /* 增大按钮尺寸 */
+            padding: 12px 20px;
             background: #4CAF50;
             color: white;
             border: none;
             border-radius: 5px;
             cursor: pointer;
             font-weight: bold;
-            font-size: 16px; /* 增大按钮字体 */
+            font-size: 16px;
         }
-        .action-btn.completed {
-            background: #2196F3;
+        .action-btn:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+        }
+        .action-btn.processing {
+            background: #FF9800;
         }
         .search-section {
             background: #e3f2fd;
@@ -222,7 +254,7 @@
         .skewer-detail-item {
             display: flex;
             justify-content: space-between;
-            padding: 3px 0; /* 减少内边距，使间距更小 */
+            padding: 3px 0;
             border-bottom: 1px dashed #ffcc80;
         }
         .skewer-detail-item:last-child {
@@ -234,13 +266,50 @@
             color: #E65100;
         }
         
-        /* 移除模态框相关样式 */
+        /* 终端选择器 */
+        .terminal-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            justify-content: center;
+        }
+        .terminal-btn {
+            padding: 8px 15px;
+            background: #e0e0e0;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .terminal-btn.active {
+            background: #4CAF50;
+            color: white;
+        }
+        
+        /* 订单锁定指示器 */
+        .lock-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: #fff3e0;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            color: #E65100;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>👨‍🍳 后厨备餐系统</h1>
+            <h1>👨‍🍳 维团备餐系统</h1>
+            <div class="terminal-info" id="terminalInfo">终端 1</div>
+        </div>
+        
+        <div class="terminal-selector">
+            <button class="terminal-btn active" data-terminal="1">终端 1</button>
+            <button class="terminal-btn" data-terminal="2">终端 2</button>
+            <button class="terminal-btn" data-terminal="3">终端 3</button>
         </div>
         
         <div class="tabs">
@@ -300,15 +369,34 @@
         
         // 全局变量
         let allOrders = [];
+        let currentTerminal = 1;
+        let processingOrders = {}; // 记录正在处理的订单
+        let refreshInterval;
         
         // 页面加载时初始化
         document.addEventListener('DOMContentLoaded', function() {
             setupEventListeners();
             loadPendingOrders();
+            startAutoRefresh();
         });
         
         // 设置事件监听器
         function setupEventListeners() {
+            // 终端选择
+            document.querySelectorAll('.terminal-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    // 移除所有活动状态
+                    document.querySelectorAll('.terminal-btn').forEach(b => b.classList.remove('active'));
+                    // 添加当前活动状态
+                    this.classList.add('active');
+                    currentTerminal = parseInt(this.getAttribute('data-terminal'));
+                    document.getElementById('terminalInfo').textContent = `终端 ${currentTerminal}`;
+                    
+                    // 重新加载订单
+                    loadPendingOrders();
+                });
+            });
+            
             // 选项卡切换
             document.querySelectorAll('.tab').forEach(tab => {
                 tab.addEventListener('click', function() {
@@ -323,6 +411,8 @@
                     // 如果是历史订单选项卡，加载历史订单
                     if (this.getAttribute('data-tab') === 'history') {
                         loadHistoryOrders();
+                    } else {
+                        loadPendingOrders();
                     }
                 });
             });
@@ -336,6 +426,23 @@
                     searchHistoryOrders();
                 }
             });
+        }
+        
+        // 开始自动刷新
+        function startAutoRefresh() {
+            // 每10秒刷新一次订单数据
+            refreshInterval = setInterval(() => {
+                if (document.getElementById('pendingTab').classList.contains('active')) {
+                    loadPendingOrders();
+                }
+            }, 10000);
+        }
+        
+        // 停止自动刷新
+        function stopAutoRefresh() {
+            if (refreshInterval) {
+                clearInterval(refreshInterval);
+            }
         }
         
         // 加载待处理订单
@@ -578,10 +685,27 @@
             // 状态标签和按钮
             let statusHtml = '';
             let actionHtml = '';
+            let processingInfoHtml = '';
+            let isProcessing = processingOrders[order.userId];
+            let isCurrentTerminalProcessing = isProcessing && isProcessing.terminal === currentTerminal;
             
             if (type === 'pending') {
-                statusHtml = `<span class="order-status status-paid">待处理</span>`;
-                actionHtml = `<button class="action-btn" onclick="completeOrder('${order.userId}')">完成备餐</button>`;
+                if (isProcessing) {
+                    statusHtml = `<span class="order-status status-processing">处理中</span>`;
+                    processingInfoHtml = `<div class="processing-info">终端 ${isProcessing.terminal} 正在处理</div>`;
+                    
+                    if (isCurrentTerminalProcessing) {
+                        actionHtml = `<button class="action-btn processing" onclick="completeOrder('${order.userId}')">完成备餐</button>`;
+                    } else {
+                        actionHtml = `<button class="action-btn" disabled>其他终端处理中</button>`;
+                    }
+                    
+                    // 添加处理中样式
+                    orderCard.classList.add('processing');
+                } else {
+                    statusHtml = `<span class="order-status status-paid">待处理</span>`;
+                    actionHtml = `<button class="action-btn" onclick="startProcessing('${order.userId}')">开始备餐</button>`;
+                }
             } else {
                 statusHtml = `<span class="order-status status-completed">已完成</span>`;
                 // 历史订单不再显示查看详情按钮
@@ -596,6 +720,7 @@
                     ${itemsHtml}
                 </div>
                 <div class="order-footer">
+                    ${processingInfoHtml}
                     ${actionHtml}
                 </div>
             `;
@@ -603,8 +728,34 @@
             return orderCard;
         }
         
+        // 开始处理订单
+        function startProcessing(orderId) {
+            // 检查订单是否已被其他终端处理
+            if (processingOrders[orderId]) {
+                showError('此订单已被其他终端处理');
+                loadPendingOrders(); // 刷新订单列表
+                return;
+            }
+            
+            // 标记订单为当前终端处理中
+            processingOrders[orderId] = {
+                terminal: currentTerminal,
+                startTime: new Date()
+            };
+            
+            // 更新UI
+            loadPendingOrders();
+            showSuccess(`订单 #${parseInt(orderId)} 已开始处理`);
+        }
+        
         // 完成订单
-        async function completeOrder(userId) {
+        async function completeOrder(orderId) {
+            if (!processingOrders[orderId] || processingOrders[orderId].terminal !== currentTerminal) {
+                showError('您没有权限完成此订单');
+                loadPendingOrders();
+                return;
+            }
+            
             if (!confirm('确认此订单已完成备餐？')) {
                 return;
             }
@@ -617,12 +768,15 @@
                     headers: {
                         'Content-Type': 'application/x-www-form-urlencoded',
                     },
-                    body: `action=updateOrderStatus&userId=${userId}&status=completed`
+                    body: `action=updateOrderStatus&userId=${orderId}&status=completed`
                 });
                 
                 const data = await response.json();
                 
                 if (data.success || data.message) {
+                    // 从处理中订单移除
+                    delete processingOrders[orderId];
+                    
                     showSuccess('订单状态已更新为已完成！');
                     loadPendingOrders();
                 } else {
