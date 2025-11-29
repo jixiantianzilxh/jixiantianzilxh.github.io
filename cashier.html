@@ -1,10 +1,9 @@
-
 <!DOCTYPE html>
 <html lang="zh">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>收银系统</title>
+    <title>维团收银系统</title>
     <style>
         * {
             margin: 0;
@@ -379,6 +378,79 @@
             margin: 0;
         }
 
+        /* 标签页样式 */
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #4CAF50;
+        }
+        .tab {
+            flex: 1;
+            padding: 12px;
+            text-align: center;
+            background: #f5f5f5;
+            border: none;
+            border-bottom: 2px solid transparent;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .tab.active {
+            background: #4CAF50;
+            color: white;
+            border-bottom: 2px solid #2E7D32;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+
+        /* 今日流水统计样式 */
+        .statistics-section {
+            background: #f3e5f5;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .statistics-btn {
+            width: 100%;
+            padding: 12px;
+            background: #9C27B0;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+        .statistics-content {
+            margin-top: 15px;
+        }
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #e1bee7;
+        }
+        .stat-label {
+            font-weight: bold;
+            color: #4A148C;
+        }
+        .stat-value {
+            font-weight: bold;
+            color: #6A1B9A;
+        }
+        .stat-total {
+            font-size: 18px;
+            color: #4A148C;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 2px solid #BA68C8;
+        }
+
     </style>
     <!-- 引入 jsQR 库用于二维码识别 -->
     <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
@@ -386,114 +458,145 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>💰 收银系统</h1>
+            <h1>💰 维团收银系统</h1>
         </div>
         
-        <div id="qrInputSection" class="qr-input-section">
-            <h2>扫描或输入订单号</h2>
-            <input type="text" id="orderIdInput" class="qr-input" placeholder="输入订单号 (如: 4)">
-            <button id="searchOrder" class="search-btn">查询订单</button>
-            <button id="startCamera" class="camera-btn">扫码获取订单号</button>
+        <!-- 标签页导航 -->
+        <div class="tabs">
+            <button class="tab active" data-tab="orderTab">订单处理</button>
+            <button class="tab" data-tab="statisticsTab">流水查询</button>
         </div>
         
-        <div id="loading" class="loading hidden">
-            正在加载订单信息...
-        </div>
-        
-        <div id="error" class="error hidden"></div>
-        <div id="success" class="success hidden"></div>
-        
-        <!-- 订单详情显示部分 -->
-        <div id="orderDetails" class="hidden">
-            <div class="section">
-                <div class="section-title">订单详情</div>
-                <div id="orderItems">
-                    <!-- 订单商品将通过JavaScript动态生成 -->
-                </div>
+        <!-- 订单处理标签页 -->
+        <div id="orderTab" class="tab-content active">
+            <div id="qrInputSection" class="qr-input-section">
+                <h2>扫描或输入订单号</h2>
+                <input type="text" id="orderIdInput" class="qr-input" placeholder="输入订单号 (如: 4)">
+                <button id="searchOrder" class="search-btn">查询订单</button>
+                <button id="startCamera" class="camera-btn">扫码获取订单号</button>
             </div>
             
-            <div id="orderSummary" class="total-section">
-                <div>订单总价:</div>
-                <div class="total-amount" id="totalAmount">0 €</div>
-                <button id="modifyOrder" class="modify-btn">修改订单</button>
-                <button id="processPayment" class="submit-btn">确认订单</button>
-            </div>
-        </div>
-        
-        <!-- 修改订单界面 -->
-        <div id="editOrderSection" class="hidden">
-            <h2 class="section-title">修改订单</h2>
-            
-            <!-- 包子类别 -->
-            <div class="category">
-                <div class="category-title">包子 (2个10€, 单买6€)</div>
-                <div id="baoziItems">
-                    <!-- 包子商品将通过JavaScript动态生成 -->
-                </div>
+            <div id="loading" class="loading hidden">
+                正在加载订单信息...
             </div>
             
-            <!-- 串串香类别 -->
-            <div class="category">
-                <div class="category-title">串串香 (每份3串10€)</div>
-                
-                <!-- 口味选择 -->
-                <div class="flavor-selection" id="flavorSelection">
-                    <strong>口味选择</strong>
-                    <div class="flavor-options-container">
-                        <div class="flavor-option">
-                            <input type="radio" id="spicy" name="flavor" value="spicy" checked>
-                            <label for="spicy">辣味</label>
-                        </div>
-                        <div class="flavor-option">
-                            <input type="radio" id="original" name="flavor" value="original">
-                            <label for="original">原味</label>
-                        </div>
+            <div id="error" class="error hidden"></div>
+            <div id="success" class="success hidden"></div>
+            
+            <!-- 订单详情显示部分 -->
+            <div id="orderDetails" class="hidden">
+                <div class="section">
+                    <div class="section-title">订单详情</div>
+                    <div id="orderItems">
+                        <!-- 订单商品将通过JavaScript动态生成 -->
                     </div>
                 </div>
                 
-                <!-- 串串香总结 -->
-                <div class="skewer-summary" id="skewerSummary"></div>
+                <div id="orderSummary" class="total-section">
+                    <div>订单总价:</div>
+                    <div class="total-amount" id="totalAmount">0 €</div>
+                    <button id="modifyOrder" class="modify-btn">修改订单</button>
+                    <button id="processPayment" class="submit-btn">确认订单</button>
+                </div>
+            </div>
+            
+            <!-- 修改订单界面 -->
+            <div id="editOrderSection" class="hidden">
+                <h2 class="section-title">修改订单</h2>
                 
-                <!-- 串串香错误提示 -->
-                <div class="skewer-error hidden" id="skewerError"></div>
+                <!-- 包子类别 -->
+                <div class="category">
+                    <div class="category-title">包子 (2个10€, 单买6€)</div>
+                    <div id="baoziItems">
+                        <!-- 包子商品将通过JavaScript动态生成 -->
+                    </div>
+                </div>
                 
-                <!-- 串串香种类 -->
-                <div id="skewerItems">
-                    <!-- 串串香种类将通过JavaScript动态生成 -->
+                <!-- 串串香类别 -->
+                <div class="category">
+                    <div class="category-title">串串香 (每份3串10€)</div>
+                    
+                    <!-- 口味选择 -->
+                    <div class="flavor-selection" id="flavorSelection">
+                        <strong>口味选择</strong>
+                        <div class="flavor-options-container">
+                            <div class="flavor-option">
+                                <input type="radio" id="spicy" name="flavor" value="spicy" checked>
+                                <label for="spicy">辣味</label>
+                            </div>
+                            <div class="flavor-option">
+                                <input type="radio" id="original" name="flavor" value="original">
+                                <label for="original">原味</label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 串串香总结 -->
+                    <div class="skewer-summary" id="skewerSummary"></div>
+                    
+                    <!-- 串串香错误提示 -->
+                    <div class="skewer-error hidden" id="skewerError"></div>
+                    
+                    <!-- 串串香种类 -->
+                    <div id="skewerItems">
+                        <!-- 串串香种类将通过JavaScript动态生成 -->
+                    </div>
                 </div>
-            </div>
-            
-            <!-- 主食类别 -->
-            <div class="category">
-                <div class="category-title">主食</div>
-                <div id="mainCourseItems">
-                    <!-- 主食将通过JavaScript动态生成 -->
+                
+                <!-- 主食类别 -->
+                <div class="category">
+                    <div class="category-title">主食</div>
+                    <div id="mainCourseItems">
+                        <!-- 主食将通过JavaScript动态生成 -->
+                    </div>
                 </div>
-            </div>
-            
-            <!-- 小吃类别 -->
-            <div class="category">
-                <div class="category-title">小吃</div>
-                <div id="snackItems">
-                    <!-- 小吃将通过JavaScript动态生成 -->
+                
+                <!-- 小吃类别 -->
+                <div class="category">
+                    <div class="category-title">小吃</div>
+                    <div id="snackItems">
+                        <!-- 小吃将通过JavaScript动态生成 -->
+                    </div>
                 </div>
-            </div>
-            
-            <!-- 饮料类别 -->
-            <div class="category">
-                <div class="category-title">饮料</div>
-                <div id="drinkItems">
-                    <!-- 饮料将通过JavaScript动态生成 -->
+                
+                <!-- 饮料类别 -->
+                <div class="category">
+                    <div class="category-title">饮料</div>
+                    <div id="drinkItems">
+                        <!-- 饮料将通过JavaScript动态生成 -->
+                    </div>
                 </div>
-            </div>
-            
-            <div class="edit-total-section">
-                <div>订单总价:</div>
-                <div class="total-amount" id="editTotalAmount">0 €</div>
-                <button id="submitEdit" class="edit-submit-btn">提交订单</button>
+                
+                <div class="edit-total-section">
+                    <div>订单总价:</div>
+                    <div class="total-amount" id="editTotalAmount">0 €</div>
+                    <button id="submitEdit" class="edit-submit-btn">提交订单</button>
+                </div>
             </div>
         </div>
+        
+<!-- 流水查询标签页 -->
+<div id="statisticsTab" class="tab-content">
+    <div class="statistics-section">
+        <h2>累计流水统计</h2>
+        <button id="showStatistics" class="statistics-btn">查看累计流水</button>
+        <div id="statisticsContent" class="statistics-content hidden">
+            <div class="stat-item">
+                <span class="stat-label">订单总数:</span>
+                <span class="stat-value" id="totalOrders">0</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">累计收入:</span>
+                <span class="stat-value" id="todayRevenue">0 €</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">平均订单金额:</span>
+                <span class="stat-value" id="avgOrderAmount">0 €</span>
+            </div>
+            <div class="stat-total" id="statisticsSummary"></div>
+        </div>
     </div>
+</div>
     
     <!-- 确认收款模态框 -->
     <div id="paymentModal" class="modal">
@@ -569,7 +672,30 @@ function formatUserId(userId) {
         document.addEventListener('DOMContentLoaded', function() {
             setupEventListeners();
             initializeSkewers();
+            setupTabs();
         });
+        
+        // 设置标签页功能
+        function setupTabs() {
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    // 移除所有标签的active类
+                    tabs.forEach(t => t.classList.remove('active'));
+                    // 添加当前标签的active类
+                    this.classList.add('active');
+                    
+                    // 隐藏所有标签内容
+                    document.querySelectorAll('.tab-content').forEach(content => {
+                        content.classList.remove('active');
+                    });
+                    
+                    // 显示当前标签内容
+                    const tabId = this.getAttribute('data-tab');
+                    document.getElementById(tabId).classList.add('active');
+                });
+            });
+        }
         
         // 初始化串串香数量
         function initializeSkewers() {
@@ -597,6 +723,7 @@ function setupEventListeners() {
     document.getElementById('close-camera').addEventListener('click', stopCameraScan);
     document.getElementById('modifyOrder').addEventListener('click', showEditOrder);
     document.getElementById('submitEdit').addEventListener('click', submitEditedOrder);
+    document.getElementById('showStatistics').addEventListener('click', showTodayStatistics);
     
     // 口味选择事件
     document.querySelectorAll('input[name="flavor"]').forEach(radio => {
@@ -619,8 +746,51 @@ function setupEventListeners() {
         }
     });
 }
-     
 
+// 显示今日流水统计
+// 显示今日流水统计
+async function showTodayStatistics() {
+    showLoading();
+    
+    try {
+        const response = await fetch(`${API_URL}?action=getOrders`);
+        const data = await response.json();
+        
+        if (data.orders && Array.isArray(data.orders)) {
+            // 直接统计所有已付款订单，不区分日期
+            const paidOrders = data.orders.filter(order => order.status === 'paid');
+            
+            // 计算统计信息
+            const totalOrders = paidOrders.length;
+            const totalRevenue = paidOrders.reduce((sum, order) => sum + parseFloat(order.totalAmount || 0), 0);
+            const avgOrderAmount = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+            
+            // 更新统计显示
+            document.getElementById('totalOrders').textContent = totalOrders;
+            document.getElementById('todayRevenue').textContent = totalRevenue.toFixed(2) + ' €';
+            document.getElementById('avgOrderAmount').textContent = avgOrderAmount.toFixed(2) + ' €';
+            
+            // 显示统计摘要
+            const summaryElement = document.getElementById('statisticsSummary');
+            if (totalOrders > 0) {
+                summaryElement.textContent = `累计完成 ${totalOrders} 笔订单，总收入 ${totalRevenue.toFixed(2)} €`;
+            } else {
+                summaryElement.textContent = '暂无已付款订单';
+            }
+            
+            // 显示统计内容
+            document.getElementById('statisticsContent').classList.remove('hidden');
+            hideLoading();
+        } else {
+            hideLoading();
+            showError('获取订单数据失败: ' + (data.error || '未知错误'));
+        }
+    } catch (error) {
+        hideLoading();
+        console.error('获取统计信息错误:', error);
+        showError('网络错误: ' + error.message);
+    }
+}     
         
         // 启动摄像头扫描
         async function startCameraScan() {
